@@ -84,6 +84,7 @@ for (maf in maf_vec) {
     }
     emp_powers[i] <- mean(correct)
   }
+  sim1_data_case2_givenSize <- data.frame(n = n)
   sim1_data_case2_givenSize$Empirical <- emp_powers
   save(file = paste0("sim1_data_case2_givenSize", "_MAF_", maf, ".rda"), sim1_data_case2_givenSize)
   ### summary of error rate;
