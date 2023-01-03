@@ -1,12 +1,9 @@
 source("functions.R")
 
 
-############# Additional Simulation: (Case-Control Study, no E) #########################
-### We study two cases:
-### 1. When sample sizes are given, compare the computed powers with empirical powers
-### 2. When powers are given, compute and compare the computed required sample sizes
+############# Additional Simulation 1: (Case-Control Study, no E) #########################
 ### Assuming the case to control ratio is 1 to 1 (corresponding to preva = 0.2)
-maf_vec <- c(0.05, 0.2, 0.3, 0.5)
+maf_vec <- c(0.05, 0.1, 0.2, 0.3, 0.4)
 for (maf in maf_vec) {
   set.seed(123)
   parameters <- list(preva = 0.5, pG = maf, betaG = log(1.5))
@@ -57,6 +54,52 @@ for (maf in maf_vec) {
 }
 
 
+############# Additional Simulation 2: (Prospective, continuous E) #########################
+maf_vec <- c(0.05, 0.1, 0.2, 0.3, 0.4)
+for (maf in maf_vec) {
+  set.seed(123)
+  parameters <- list(preva = 0.2, pG = maf, muE = 0, sigmaE = 1, betaG = log(1.3), betaE = log(2.5), gammaG = log(0.5))
+  others_para <- convert_preva_to_intercept(parameters, mode = "dominant", covariate = "continuous")
+  beta0 <- others_para$beta0
+  exp(beta0)/(1+exp(beta0))
+  n <- seq(from = 3000, to = 10000, by = 1000)
+  Power_Proposed1 <- c()
+  Power_Proposed2 <- c()
+  for (i in 1:length(n)) {
+    Power_Proposed1[i] <- SPCompute:::Compute_Power_Sim(parameters, n = n[i], mode = "dominant", covariate = "continuous", response = "binary")
+    Power_Proposed2[i] <- SPCompute:::Compute_Power_Expanded(parameters, n = n[i], mode = "dominant", covariate = "continuous", response = "binary")
+  }
+  set.seed(123)
+  emp_powers <- c()
+  for (i in 1:length(n)) {
+    correct <- c()
+    for (j in 1:1000) {
+      k <- n[i]
+      G <- sample(c(0,1), size = k, replace = T, prob = c((1-parameters$pG)^2, (1 - ((1-parameters$pG)^2))))
+      E <- others_para$gamma0 + parameters$gammaG * G + rnorm(n = k, sd = others_para$sigmaError)
+      y <- others_para$beta0 + parameters$betaG*G + parameters$betaE*E + rlogis(k)
+      y <- ifelse(y>0, 1, 0)
+      mod <- glm(y~G+E, family = binomial(link = "logit"))
+      correct[j] <- summary(mod)$coefficients[2,4] <= 0.05
+    }
+    emp_powers[i] <- mean(correct)
+  }
+  sim1_data_case2_givenSize$Empirical <- emp_powers
+  save(file = paste0("sim1_data_case2_givenSize", "_MAF_", maf, ".rda"), sim1_data_case2_givenSize)
+  ### summary of error rate;
+  # methods <- c("Pro1", "Pro2", "Demidenko", "Quanto")
+  methods <- c("Pro1", "Pro2")
+  MAE <- c(mean(abs(emp_powers - Power_Proposed1)), mean(abs(emp_powers - Power_Proposed2)))
+  MaxAE <- c(max(abs(emp_powers - Power_Proposed1)), max(abs(emp_powers - Power_Proposed2)))
+  summary_data <- data.frame(methods = methods, MAE = MAE, MaxAE = MaxAE)
+  save(file = paste0("summary_sim1_data_case2_givenSize", "_MAF_", maf, ".rda"), summary_data)
+}
 
 
+############## Summary table:
+new_summary <- matrix(nrow = 2, ncol = 1, c("Pro1", "Pro2"))
+for (maf in maf_vec){
+  load(paste0("summary_sim1_data_case0_givenSize", "_MAF_", maf, ".rda"))
+  new_summary <- cbind(new_summary, summary_data[,-1])
+}
 
