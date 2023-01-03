@@ -1,0 +1,62 @@
+source("functions.R")
+
+
+############# Additional Simulation: (Case-Control Study, no E) #########################
+### We study two cases:
+### 1. When sample sizes are given, compare the computed powers with empirical powers
+### 2. When powers are given, compute and compare the computed required sample sizes
+### Assuming the case to control ratio is 1 to 1 (corresponding to preva = 0.2)
+maf_vec <- c(0.05, 0.2, 0.3, 0.5)
+for (maf in maf_vec) {
+  set.seed(123)
+  parameters <- list(preva = 0.5, pG = maf, betaG = log(1.5))
+  others_para <- convert_preva_to_intercept(parameters, mode = "dominant", covariate = "none")
+  beta0 <- convert_preva_to_intercept(parameters, mode = "dominant", covariate = "none", seed = 2)
+  exp(beta0)/(1+exp(beta0))
+  N <- seq(from = 300, to = 1400, by = 100)
+  n <- 2*N
+  Power_Proposed1 <- c()
+  Power_Proposed2 <- c()
+  for (i in 1:length(n)) {
+    Power_Proposed1[i] <- SPCompute:::Compute_Power_Sim(parameters, n = n[i], mode = "dominant", covariate = "none", response = "binary")
+    Power_Proposed2[i] <- SPCompute:::Compute_Power_Expanded(parameters, n = n[i], mode = "dominant", covariate = "none", response = "binary")
+  }
+  sim1_data_case0_givenSize <- data.frame(n = n)
+  sim1_data_case0_givenSize$n <- n
+  # sim1_data_case0_givenSize$Demidenko <- c(0.487, 0.605, 0.701, 0.778, 0.837, 0.882, 0.916, 0.94, 0.958, 0.971, 0.98, 0.986)
+  # sim1_data_case0_givenSize$Quanto <- c(0.4910, 0.6092, 0.7058, 0.7823, 0.8412, 0.8857, 0.9186, 0.9426, 0.9599, 0.9722, 0.9809, 0.9870)
+  # sim1_data_case0_givenSize$Quanto <- round(sim1_data_case0_givenSize$Quanto, 3)
+  sim1_data_case0_givenSize$Proposed1 <- round(Power_Proposed1, 3)
+  sim1_data_case0_givenSize$Proposed2 <- round(Power_Proposed2, 3)
+  emp_powers <- c()
+  for (i in 1:length(n)) {
+    correct <- c()
+    for (j in 1:1000) {
+      B <- 10000
+      G <- sample(c(0,1), size = B, replace = T, prob = c((1-parameters$pG)^2, (1 - ((1-parameters$pG)^2))))
+      y <- beta0 + parameters$betaG*G + rlogis(B)
+      y <- ifelse(y>=0, 1, 0)
+      data <- data.frame(G, y)
+      case_data <- data %>% filter(y == 1) %>% sample_n(N[i], replace = F)
+      control_data <- data %>% filter(y == 0) %>% sample_n((n[i] - N[i]), replace = F)
+      sampled_data <- rbind(case_data, control_data)
+      mod <- glm(y~G, family = binomial(link = "logit"), data = sampled_data)
+      correct[j] <- summary(mod)$coefficients[2,4] <= 0.05
+    }
+    emp_powers[i] <- mean(correct)
+  }
+  sim1_data_case0_givenSize$Empirical_CaseControl <- emp_powers
+  save(file = paste0("sim1_data_case0_givenSize", "_MAF_", maf, ".rda"), sim1_data_case0_givenSize)
+  ### summary of error rate;
+  # methods <- c("Pro1", "Pro2", "Demidenko", "Quanto")
+  methods <- c("Pro1", "Pro2")
+  MAE <- c(mean(abs(emp_powers - Power_Proposed1)), mean(abs(emp_powers - Power_Proposed2)))
+  MaxAE <- c(max(abs(emp_powers - Power_Proposed1)), max(abs(emp_powers - Power_Proposed2)))
+  summary_data <- data.frame(methods = methods, MAE = MAE, MaxAE = MaxAE)
+  save(file = paste0("summary_sim1_data_case0_givenSize", "_MAF_", maf, ".rda"), summary_data)
+}
+
+
+
+
+
