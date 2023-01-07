@@ -100,7 +100,31 @@ for (maf in maf_vec) {
 ############## Summary table:
 new_summary <- matrix(nrow = 2, ncol = 1, c("Pro1", "Pro2"))
 for (maf in maf_vec){
-  load(paste0("summary_sim1_data_case0_givenSize", "_MAF_", maf, ".rda"))
+  load(paste0("summary_sim1_data_case2_givenSize", "_MAF_", maf, ".rda"))
   new_summary <- cbind(new_summary, summary_data[,-1])
 }
 
+MAE_summary <- new_summary[,c(1,2,4,6,8,10)]
+MaxAE_summary <- new_summary[,c(1,3,5,7,9,11)]
+
+
+#### Plotting:
+plot(as.numeric(MaxAE_summary[1,-1]) ~ maf_vec, type = 'o',
+     ylim = c(0,0.1), ylab = "Max AE", xlab = "MAF",
+     col = "red")
+lines(as.numeric(MaxAE_summary[2,-1]) ~ maf_vec, col = "blue")
+points(as.numeric(MaxAE_summary[2,-1]) ~ maf_vec, col = "blue")
+legend(0.3, 0.08, legend=c("P1:SS", "P2:RD"),
+       col=c("red", "blue"), 
+       cex=1, box.lty = 0, lwd = 2
+)
+
+plot(as.numeric(MAE_summary[1,-1]) ~ maf_vec, type = 'o',
+     ylim = c(0,0.1), ylab = "Average AE", xlab = "MAF",
+     col = "red")
+lines(as.numeric(MAE_summary[2,-1]) ~ maf_vec, col = "blue")
+points(as.numeric(MAE_summary[2,-1]) ~ maf_vec, col = "blue")
+legend(0.3, 0.08, legend=c("P1:SS", "P2:RD"),
+       col=c("red", "blue"), 
+       cex=1, box.lty = 0, lwd = 2
+)
