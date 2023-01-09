@@ -1,4 +1,4 @@
-#### Output the full gwas result of hypertension on african
+#### Output the full gwas result of hypertension on European
 library(stringr)
 library(data.table)
 library(tidyverse)
@@ -12,26 +12,27 @@ library(HardyWeinberg)
 library(SPCompute)
 
 geno_path = "/home/ziang/Documents/UKB/"
-data_path = "/home/ziang/Documents/Stats-Gene/UKB/African_GWAS_hypertension_bp/data/"
+data_path = "/home/ziang/Documents/Stats-Gene/UKB/European_GWAS_hypertension_bp/data/"
 plink = "/home/ziang/Documents/UKB/plink2"
 plink19 = "/home/ziang/Documents/UKB/plink19"
-result_path = "/home/ziang/Documents/Stats-Gene/UKB/African_GWAS_hypertension_bp/results/"
-figure_path = "/home/ziang/Documents/Stats-Gene/UKB/African_GWAS_hypertension_bp/figures/"
+result_path = "/home/ziang/Documents/Stats-Gene/UKB/European_GWAS_hypertension_bp/results/"
+figure_path = "/home/ziang/Documents/Stats-Gene/UKB/European_GWAS_hypertension_bp/figures/"
 
 
 # geno_path = "/Users/ziangzhang/Documents/GitHub/Stats-Gene/UKB"
-# data_path = "/Users/ziangzhang/Documents/GitHub/Stats-Gene/UKB/African_GWAS_hypertension_bp/data/"
-# result_path = "/Users/ziangzhang/Documents/GitHub/Stats-Gene/UKB/African_GWAS_hypertension_bp/results/"
-# figure_path = "/Users/ziangzhang/Documents/GitHub/Stats-Gene/UKB/African_GWAS_hypertension_bp/figures/"
+# data_path = "/Users/ziangzhang/Documents/GitHub/Stats-Gene/UKB/European_GWAS_hypertension_bp/data/"
+# result_path = "/Users/ziangzhang/Documents/GitHub/Stats-Gene/UKB/European_GWAS_hypertension_bp/results/"
+# figure_path = "/Users/ziangzhang/Documents/GitHub/Stats-Gene/UKB/European_GWAS_hypertension_bp/figures/"
 
 
 
 # geno_path = "D:/Stats-Gene/UKB/"
-# data_path = "D:/Stats-Gene/UKB/African_GWAS_hypertension_bp/data/"
-# result_path = "D:/Stats-Gene/UKB/African_GWAS_hypertension_bp/results/"
-# figure_path = "D:/Stats-Gene/UKB/African_GWAS_hypertension_bp/figures/"
+# data_path = "D:/Stats-Gene/UKB/European_GWAS_hypertension_bp/data/"
+# result_path = "D:/Stats-Gene/UKB/European_GWAS_hypertension_bp/results/"
+# figure_path = "D:/Stats-Gene/UKB/European_GWAS_hypertension_bp/figures/"
 
-load(paste0(data_path, "final_data.rda"))
+load("/home/ziang/Documents/Stats-Gene/UKB/European_GWAS_hypertension_bp/data/pheno_data.rda")
+final_data <- pheno_data[,-2] %>% na.omit()
 colnames(final_data)[1] <- "IID"
 final_data <- cbind(FID = final_data$IID ,final_data)
 final_data$hypertension <- ifelse(final_data$hypertension == 1, 2,1)
@@ -41,9 +42,9 @@ load(paste0(data_path, "result_gamma_sex.rda"))
 load(paste0(data_path, "result_gamma_age.rda"))
 load(paste0(data_path, "top_result_bp_summary.rda"))
 load(paste0(data_path, "top_result_hyper_summary.rda"))
-MAF_bp <- fread(file = paste0(result_path, "self_africa_result_bp.afreq"))
+MAF_bp <- fread(file = paste0(result_path, "self_European_result_bp.afreq"))
 MAF_bp <- MAF_bp %>% filter(ID %in% top_result_bp_summary$SNP) %>% mutate(SNP = ID, MAF = ALT_FREQS) %>% select(SNP, MAF)
-MAF_hyper <- fread(file = paste0(result_path, "self_africa_result_hyper.afreq"))
+MAF_hyper <- fread(file = paste0(result_path, "self_European_result_hyper.afreq"))
 MAF_hyper <- MAF_hyper %>% filter(ID %in% top_result_hyper_summary$SNP) %>% mutate(SNP = ID, MAF = ALT_FREQS) %>% select(SNP, MAF)
 Gamma_sex_bp <- result_gamma_sex %>% filter(ID %in% top_result_bp_summary$SNP) %>% mutate(SNP = ID) %>% select(SNP, Gamma_Sex)
 Gamma_sex_hyper <- result_gamma_sex %>% filter(ID %in% top_result_hyper_summary$SNP) %>% mutate(SNP = ID) %>% select(SNP, Gamma_Sex)
@@ -65,7 +66,7 @@ result <- c()
 SNP_chro <- top_result_bp_summary$CHR
 for (i in 1:length(SNP_chro)) {
   system(paste0(plink,
-                " --bfile ", geno_path,"self_africa_filtered_data_afterSNP_QC",
+                " --bfile ", geno_path,"self_European_filtered_data_afterSNP_QC",
                 " --snp ", SNP_names[i],
                 " --make-bed ",
                 " --out ", result_path, "top_SNP_bp"))
@@ -97,7 +98,7 @@ for (i in 1:length(top_result_bp_summary$SNP)) {
 
 #####################################################################
 #####################################################################
-##### Step 12: Power Computation for the finished GWAS
+##### Step 10: Power Computation for the finished GWAS
 #####################################################################
 #####################################################################
 Power_bp_with_E <- c()
@@ -122,7 +123,7 @@ bp_result %>% pivot_longer(cols = c(Power_without_E, Power_withE), values_to = "
   xlab("SNP") +
   scale_fill_manual(labels = c("with E", "without E"), values = c("2", "4")) +
   ggtitle("Blood Pressure") +
-  coord_cartesian(ylim=c(0.1,0.6)) +
+  coord_cartesian(ylim=c(0.9,1.0)) +
   theme_classic()
 
 ggsave(filename = paste0(figure_path, "bp_barplot.pdf"), device = "pdf", width = 5,
@@ -152,7 +153,7 @@ hypertension_result %>% pivot_longer(cols = c(Power_without_E, Power_withE), val
   xlab("SNP") +
   scale_fill_manual(labels = c("with E", "without E"), values = c("2", "4")) +
   ggtitle("Hypertension") +
-  coord_cartesian(ylim=c(0.1,0.6)) +
+  coord_cartesian(ylim=c(0.9,1)) +
   theme_classic()
 
 ggsave(filename = paste0(figure_path, "hypertension_barplot.pdf"), device = "pdf", width = 5,
@@ -166,7 +167,7 @@ ggsave(filename = paste0(figure_path, "hypertension_barplot.pdf"), device = "pdf
 
 #####################################################################
 #####################################################################
-##### Step 13: Power Computation for the replication GWAS
+##### Step 11: Power Computation for the replication GWAS
 #####################################################################
 #####################################################################
 Power_bp_with_E <- c()
@@ -232,7 +233,7 @@ ggsave(filename = paste0(figure_path, "hypertension_barplot_replicate.pdf"), dev
 
 #####################################################################
 #####################################################################
-##### Step 14: Sample Size Computation for the replication GWAS
+##### Step 12: Sample Size Computation for the replication GWAS
 #####################################################################
 #####################################################################
 Size_bp_with_E <- c()
@@ -257,7 +258,7 @@ bp_result %>% pivot_longer(cols = c(Size_without_E, Size_withE), values_to = "Sa
   xlab("SNP") +
   scale_fill_manual(labels = c("with E", "without E"), values = c("2", "4")) +
   ggtitle("Blood Pressure") +
-  coord_cartesian(ylim=c(1000,2000)) +
+  coord_cartesian(ylim=c(100000,130000)) +
   theme_classic()
 
 ggsave(filename = paste0(figure_path, "bp_barplot_size.pdf"), device = "pdf", width = 5,
@@ -287,7 +288,7 @@ hypertension_result %>% pivot_longer(cols = c(Size_without_E, Size_withE), value
   xlab("SNP") +
   scale_fill_manual(labels = c("with E", "without E"), values = c("2", "4")) +
   ggtitle("Hypertension") +
-  coord_cartesian(ylim=c(1000, 2000)) +
+  coord_cartesian(ylim=c(100000,130000)) +
   theme_classic()
 
 ggsave(filename = paste0(figure_path, "hypertension_barplot_size.pdf"), device = "pdf", width = 5,
@@ -295,7 +296,7 @@ ggsave(filename = paste0(figure_path, "hypertension_barplot_size.pdf"), device =
 
 
 
-
+### The computed powers are too big... there should be some errors or bugs.
 
 
 
