@@ -172,8 +172,13 @@ long_MAE_summary %>% ggplot() +
   geom_boxplot(aes(x = MAF, y = MAE, fill = Method)) + 
   ylim(c(0,0.1)) + ylab("Average AE") + 
   theme_classic(base_size = 15) +
-  theme(legend.position = c(0.8, 0.7))
-
+  theme(legend.position = c(0.7, 0.7),
+        legend.key.size = unit(1, 'cm'), #change legend key size
+        legend.key.height = unit(1, 'cm'), #change legend key height
+        legend.key.width = unit(1, 'cm'), #change legend key width
+        legend.title = element_text(size=14), #change legend title font size
+        legend.text = element_text(size=10)) #change legend text font size)
+ggsave(filename = "MAE_boxplot.pdf", height = 5, width = 5)
 
 names(MaxAE_summary) <- c("Method", maf_vec)
 long_MaxAE_summary <- pivot_longer(MaxAE_summary, cols = `0.05`:`0.5`, 
@@ -182,7 +187,13 @@ long_MaxAE_summary %>% ggplot() +
   geom_boxplot(aes(x = MAF, y = MaxAE, fill = Method)) + 
   ylim(c(0,0.1)) + ylab("Max AE") + 
   theme_classic(base_size = 15) +
-  theme(legend.position = c(0.8, 0.7))
+  theme(legend.position = c(0.7, 0.7),
+        legend.key.size = unit(1, 'cm'), #change legend key size
+        legend.key.height = unit(1, 'cm'), #change legend key height
+        legend.key.width = unit(1, 'cm'), #change legend key width
+        legend.title = element_text(size=14), #change legend title font size
+        legend.text = element_text(size=10)) #change legend text font size)
+ggsave(filename = "MaxAE_boxplot.pdf", height = 5, width = 5)
 
 
 

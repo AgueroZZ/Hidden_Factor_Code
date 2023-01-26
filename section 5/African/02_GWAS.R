@@ -1,4 +1,4 @@
-#### Output the full gwas result of hypertension on african
+#### Output the full gwas result of hypertension on African
 library(stringr)
 library(data.table)
 library(tidyverse)
