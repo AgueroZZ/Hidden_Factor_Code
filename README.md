@@ -14,7 +14,7 @@ The simulation/examples in the main paper are replicated in the following script
 2. All the required R packages will be loaded in the R script, please make sure they are installed in the system before proceed.
 
 
-The results in the paper are reproduced as follows (please make sure each cpp file is compiled before running the R script in the corrsponding folder):
+The results in the paper are reproduced as follows:
 
 - **Section 4.1-4.2**:  
      - *script.R* generates the dataset and runs the simulation. It will also produce the figures used in the manuscript, and save them in the current working directory.
